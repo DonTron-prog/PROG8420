@@ -18,12 +18,11 @@ length = length.rename(columns={0: "Count"})
 
 
 stats = pd.concat([sums, length], axis=1)
-print(stats)
-'''
+#print(stats)
+
 stats = stats.sort_values(by = ['Sum'], ascending=False)
-print (stats.head(20))
+print (stats.head(30))
 
 
 #sumdf = pd.DataFrame(g, columns = ['Facility', 'Total Output'])
 #print (sumdf)
-'''
