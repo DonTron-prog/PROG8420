@@ -44,7 +44,7 @@ corr = Large_Demand_GOC.corrwith(Large_Demand_GOC['Market Demand'], method='spea
 #the plants that correlated the most
 pd.options.display.max_columns = 10
 corr = corr.sort_values(ascending=False)
-#print(corr.head(20))
+print(corr.head(20))
 Large_Names = corr.index[0:20]
 #print (Large_Names)
 #LargeCorr_DF = GOC.index
