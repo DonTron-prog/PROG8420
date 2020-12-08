@@ -56,10 +56,11 @@ for i in Large_Names:
 #Dem_GOC_high_corr.plot(y='Market Demand', use_index=True)
 #plt.show()
 
-acf = pd.plotting.autocorrelation_plot(Dem_GOC_high_corr['Market Demand'])
-acf.plot()
-plt.show()
+#Dem_GOC_high_corr.to_csv('/home/donald/Dropbox/Energy_analysis/Damand/Dem_GOC_high_correlated.csv')
+
 '''
+
+
 
 #print (Demand.tail(10))
 #corr.to_csv('/home/donald/Dropbox/Energy_analysis/GOC/market_demand_spearman.csv')
