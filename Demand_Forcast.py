@@ -11,11 +11,11 @@ import itertools
 
 
 
-Dem_GOC_high_corr = pd.DataFrame(pd.read_csv('/home/donald/Dropbox/Energy_analysis/Damand/Dem_GOC_high_correlated.csv', header=0))
+Demand = pd.DataFrame(pd.read_csv('/home/donald/Dropbox/Energy_analysis/Damand/Demand.csv', header=0))
 
-Dem_GOC_high_corr['Date'] = pd.to_datetime(Dem_GOC_high_corr['Date'])
+Demand['Date'] = pd.to_datetime(Demand['Date'])
 
-Demand = Dem_GOC_high_corr.set_index('Date')
+Demand = Demand.set_index('Date')
 
 #Demand.plot(y='Market Demand', use_index=True)
 #plt.show()
@@ -30,14 +30,15 @@ Demand = Dem_GOC_high_corr.set_index('Date')
 y = Demand['Market Demand'].resample('M').mean()
 fig, ax = plt.subplots(figsize=(20, 6))
 print(y.tail())
-
+#print(y.dtypes)
+'''
 ax.plot(y,marker='.', linestyle='-', linewidth=0.5, label='Weekly')
 ax.plot(y.resample('M').mean(),marker='o', markersize=8, linestyle='-', label='Monthly Mean Resample')
 ax.set_ylabel('Market Demand')
 ax.legend();
 plt.show()
 #y = Dem_GOC_high_corr['Market Demand'].resample('M').mean()
-'''
+
 #sesonal decompostion
 def seasonal_decompose (y):
     decomposition = sm.tsa.seasonal_decompose(y, model='additive',extrapolate_trend='freq')
@@ -98,13 +99,13 @@ ADF_test(y_12lag_detrend,'12 lag differenced de-trended data')
 '''
 
 y_to_train = y[:'2019-01-01'] # dataset to train
-y_to_val = y['2019-01-01':] # last X months for test
-predict_date = len(y) - len(y[:'2019-01-01']) # the number of data points for the test set
+y_to_val = y['2019-01-02':] # last X months for test
+predict_date = len(y) - len(y[:'2019-01-02']) # the number of data points for the test set
 
-'''
+
 #Holts-Winters model for trend and seasonality
 #additive Trend + Seasonal + Random (seasonal changes inthe data stay roughly the same over time)
-
+'''
 def holt_win_sea(y,y_to_train,y_to_test,seasonal_type,seasonal_period,predict_date):
 
     y.plot(marker='o', color='black', legend=True, figsize=(14, 7))
@@ -150,9 +151,9 @@ def holt_win_sea(y,y_to_train,y_to_test,seasonal_type,seasonal_period,predict_da
 
     plt.show()
 
-holt_win_sea(y, y_to_train,y_to_val,'additive',52, predict_date)
-
-
+holt_win_sea(y, y_to_train,y_to_val,'additive',183, predict_date)
+'''
+'''
 def sarima_grid_search(y,seasonal_period):
     p = d = q = range(0, 2)
     pdq = list(itertools.product(p, d, q))
@@ -182,7 +183,7 @@ def sarima_grid_search(y,seasonal_period):
                 continue
     print('The set of parameters with the minimum AIC is: SARIMA{}x{} - AIC:{}'.format(param_mini, param_seasonal_mini, mini))
 
-sarima_grid_search(y,52)
+sarima_grid_search(y,26)
 '''
 
 # Call this function after pick the right(p,d,q) for SARIMA based on AIC
@@ -242,4 +243,63 @@ def sarima_eva(y,order,seasonal_order,seasonal_period,pred_date,y_to_test):
 
     return (results)
 
-model = sarima_eva(y,(1, 1, 1),(1, 1, 1, 52),52,'2019-01-01',y_to_val)
+model = sarima_eva(y,(0, 1, 2),(0, 1, 2, 12),12,'2018-12-31',y_to_val)
+
+'''
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+plot_acf(y)
+plt.show()
+plot_pacf(y)
+plt.show()
+'''
+'''
+p = range(0, 3)
+d = range(1,2)
+q = range(0, 3)
+pdq = list(itertools.product(p, d, q))
+seasonal_pdq = [(x[0], x[1], x[2], 12) for x in list(itertools.product(p, d, q))]
+print('Examples of parameter combinations for Seasonal ARIMA...')
+print('SARIMAX: {} x {}'.format(pdq[1], seasonal_pdq[1]))
+print('SARIMAX: {} x {}'.format(pdq[1], seasonal_pdq[2]))
+print('SARIMAX: {} x {}'.format(pdq[2], seasonal_pdq[3]))
+print('SARIMAX: {} x {}'.format(pdq[2], seasonal_pdq[4]))
+
+
+for param in pdq:
+    for param_seasonal in seasonal_pdq:
+        try:
+            mod = sm.tsa.statespace.SARIMAX(y,
+                                            order=param,
+                                            seasonal_order=param_seasonal,
+                                            enforce_stationarity=False,
+                                            enforce_invertibility=False)
+            results = mod.fit()
+            print('ARIMA{}x{}12 - AIC:{}'.format(param, param_seasonal, results.aic))
+        except:
+            continue
+'''
+
+'''
+
+#ARIMA(0, 1, 2)x(0, 1, 2, 12)
+mod = sm.tsa.statespace.SARIMAX(y,
+                                order=(0, 1, 2),
+                                seasonal_order=(0, 1, 2, 12))
+results = mod.fit(method = 'powell')
+print(results.summary().tables[1])
+
+results.plot_diagnostics(figsize=(18, 8))
+plt.show()
+
+pred = results.get_prediction(start=pd.to_datetime('2018-12-31'), dynamic=False)
+pred_ci = pred.conf_int()
+ax = y.plot(label='observed')
+pred.predicted_mean.plot(ax=ax, label='One-step ahead Forecast', alpha=.7, figsize=(14, 4))
+ax.fill_between(pred_ci.index,
+                pred_ci.iloc[:, 0],
+                pred_ci.iloc[:, 1], color='k', alpha=.2)
+ax.set_xlabel('Date')
+ax.set_ylabel('AQI')
+plt.legend()
+plt.show()
+'''
